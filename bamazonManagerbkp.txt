@@ -1,0 +1,70 @@
+var mysql = require('mysql');
+var inquirer = require('inquirer');
+
+var connection = mysql.createConnection({
+	host:"localhost",
+	port: 3306,
+	user:"root",
+	password: "Kramer!234",
+	database:"bamazon"
+});
+
+connection.connect(function(err){
+	if (err) throw err;
+    console.log("connection successful!");
+    makeTable();    
+   // promptCustomer();
+	// makeTable function collects date from mysql database and prints it to the screen
+});
+
+var makeTable = function() {
+	connection.query("SELECT * FROM products", function(err,res){
+		for(var i = 0; i<res.length; i++){
+			console.log(res[i].itemid + " || " + res[i].productname + " || " +
+				res[i].departmentname + " || " + res[i].price + " || " + res[i].stockquantity + "\n");
+			// run again here to see if it works
+		}
+	promptManager(res);
+	})
+}
+
+ var promptManager = function(res) {
+ 	inquirer.prompt ([{
+ 		type: 'input',
+ 		name: 'choice',
+ 		message: "Enter id of the item you are adding additional stock to? [Quit with Q]"
+ 	}]).then(function(answer) {
+ 		var correct = false;
+ 			if (answer.choice.toUpperCase()=="Q"){
+ 				process.exit();
+ 			}
+ 			for (var i = 0; i < res.length; i++) {
+ 				if (res[i].itemid == answer.choice) {
+ 					correct=true;
+ 					var productid=answer.choice;
+ 					var id = i;
+ 					inquirer.prompt({
+ 						type: "input",
+ 						name: "quant",
+ 						message: "How many additional items do you want to add to stock?",
+ 						validate: function(value) {
+ 							if(isNaN(value) === false) {
+ 								return true;
+ 							} else {
+ 								return false;
+ 							}
+ 						}
+ 					}).then(function(answer) {
+ 						
+                             
+                        connection.query("UPDATE products SET stockquantity = '" +  (parseInt(res[id].stockquantity) + parseInt(answer.quant)) + "' WHERE itemid = '" + productid + "'", function(err,res2) {
+                                 console.log("Item stock increased!");
+                                 console.log("-------------------------------------------------------");
+ 								makeTable();
+ 							})
+ 						})
+ 				}
+ 			}
+ 		})
+     }
+     
